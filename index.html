@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eee8db" />
+    <title>Мандат — симулятор президента</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <section class="screen start-screen" id="startScreen">
+        <header class="start-topbar">
+          <a class="brand" href="#" aria-label="Мандат — на главную"><span class="brand-mark"><i></i><i></i><i></i></span><span>МАНДАТ</span></a>
+          <div class="top-note">СИМУЛЯТОР ГОСУПРАВЛЕНИЯ <span>·</span> ВЫБОР КАМПАНИИ</div>
+        </header>
+        <div class="start-layout">
+          <div class="intro-column">
+            <div class="eyebrow"><span class="eyebrow-line"></span> НАЧАЛО СРОКА</div>
+            <h1>Ваша страна.<br /><em>Ваши решения.</em></h1>
+            <p class="intro-copy">Выберите государство и попробуйте провести его через непростые времена.</p>
+            <div class="intro-foot"><span class="scroll-cue">01 <span>—</span> 03</span><span class="intro-foot-line"></span><span>ВЫБЕРИТЕ СТРАНУ</span></div>
+          </div>
+          <div class="country-area">
+            <div class="section-heading"><div><span class="overline">КАМПАНИЯ ДЕРЖАВЫ</span><h2>С чего начнём?</h2></div><span class="mono muted">СТАРТОВЫЕ УСЛОВИЯ</span></div>
+            <div class="country-grid" id="countryGrid" role="listbox" aria-label="Выберите государство">
+              <button class="country-card selected" data-country="russia" role="option" aria-selected="true">
+                <span class="card-topline"><span class="flag flag-ru"><i></i><i></i><i></i></span><span class="card-code">RUS / 01</span><span class="campaign-badge hidden" id="campaignBadge-russia">СОХРАНЕНО</span><span class="select-check">✓</span></span>
+                <span class="country-name">Россия</span><span class="country-subtitle">Сырьевая экономика · Евразия</span><span class="card-rule"></span>
+                <span class="country-stats"><span><small>НАСЕЛЕНИЕ</small><b>146 <i>млн</i></b></span><span><small>ИНФЛЯЦИЯ</small><b>7,8<i>%</i></b></span></span>
+                <span class="card-bottom"><span>ЭКОНОМИКА</span><b>УСТОЙЧИВАЯ</b></span>
+              </button>
+              <button class="country-card" data-country="germany" role="option" aria-selected="false">
+                <span class="card-topline"><span class="flag flag-de"><i></i><i></i><i></i></span><span class="card-code">DEU / 02</span><span class="campaign-badge hidden" id="campaignBadge-germany">СОХРАНЕНО</span><span class="select-check">✓</span></span>
+                <span class="country-name">Германия</span><span class="country-subtitle">Экспортная экономика · Европа</span><span class="card-rule"></span>
+                <span class="country-stats"><span><small>НАСЕЛЕНИЕ</small><b>84 <i>млн</i></b></span><span><small>ИНФЛЯЦИЯ</small><b>2,4<i>%</i></b></span></span>
+                <span class="card-bottom"><span>ЭКОНОМИКА</span><b>РАЗВИТАЯ</b></span>
+              </button>
+              <button class="country-card" data-country="brazil" role="option" aria-selected="false">
+                <span class="card-topline"><span class="flag flag-br"><span class="flag-diamond"><i></i></span></span><span class="card-code">BRA / 03</span><span class="campaign-badge hidden" id="campaignBadge-brazil">СОХРАНЕНО</span><span class="select-check">✓</span></span>
+                <span class="country-name">Бразилия</span><span class="country-subtitle">Растущий рынок · Южная Америка</span><span class="card-rule"></span>
+                <span class="country-stats"><span><small>НАСЕЛЕНИЕ</small><b>203 <i>млн</i></b></span><span><small>ИНФЛЯЦИЯ</small><b>4,6<i>%</i></b></span></span>
+                <span class="card-bottom"><span>ЭКОНОМИКА</span><b>РАСТУЩАЯ</b></span>
+              </button>
+            </div>
+            <div class="start-action-row"><div class="selection-caption"><span class="selection-bullet"></span><span id="selectionCaption">ВЫБРАНА РОССИЯ</span><span class="caption-slash">/</span><span class="muted">СЛОЖНОСТЬ: СРЕДНЯЯ</span></div><div class="start-actions"><button class="secondary-button new-campaign-button hidden" id="newCampaignButton" type="button">Начать заново</button><button class="primary-button" id="startButton" type="button">Начать управление <span>→</span></button></div></div>
+          </div>
+        </div>
+        <footer class="start-footer"><span>МАНДАТ — СИМУЛЯТОР ПОЛИТИЧЕСКИХ РЕШЕНИЙ</span><span>ВЕРСИЯ 0.1 <b>·</b> ДАННЫЕ УСЛОВНЫЕ</span></footer>
+      </section>
+
+      <section class="screen game-screen hidden" id="gameScreen" aria-label="Карта государства">
+        <section class="map-panel" aria-label="Карта мира">
+          <div class="map-wrap">
+            <div id="worldMap" class="world-map" role="application" aria-label="Карта мира с границами государств"></div>
+            <div id="mapStatus" class="map-status" role="status">Загрузка карты…</div>
+          </div>
+        </section>
+
+        <nav class="command-dock" aria-label="Меню государства">
+          <div class="date-card dock-date">
+            <span class="date-icon" aria-hidden="true">▦</span>
+            <div><small>ТЕКУЩАЯ ДАТА</small><b><span id="monthValue">ЯНВАРЬ</span> <span id="yearValue">2026</span></b><small>ДЕНЬ <span id="dayValue">1</span> · <span id="gameTimeValue">00:00</span></small></div>
+            <span class="simulation-status" id="simulationStatus">ПАУЗА</span>
+          </div>
+          <span class="dock-divider" aria-hidden="true"></span>
+          <div class="dock-tools">
+            <button class="country-menu-button menu-orb" id="countryMenuButton" type="button" data-tooltip="Ваше государство · нажмите, чтобы выбрать другую страну" aria-label="Ваше государство. Нажмите, чтобы выбрать другую страну">
+              <span class="flag flag-ru" id="countryMenuFlag" aria-hidden="true"><i></i><i></i><i></i></span>
+            </button>
+            <button class="tool-button menu-orb" id="economyButton" type="button" data-tooltip="Экономика" aria-label="Экономика" aria-haspopup="dialog"><span class="tool-icon" aria-hidden="true">₽</span></button>
+            <button class="tool-button menu-orb" id="societyButton" type="button" data-tooltip="Общество" aria-label="Общество" aria-haspopup="dialog"><span class="tool-icon" aria-hidden="true">◎</span></button>
+            <button class="tool-button menu-orb" id="cabinetButton" type="button" data-tooltip="Кабинет" aria-label="Кабинет" aria-haspopup="dialog"><span class="tool-icon" aria-hidden="true">▤</span></button>
+          </div>
+          <span class="dock-divider dock-divider-play" aria-hidden="true"></span>
+          <div class="speed-control" role="group" aria-label="Скорость игры">
+            <span class="speed-control-label">СКОРОСТЬ</span>
+            <div class="speed-options">
+              <button type="button" data-game-speed="1" aria-pressed="false">1×</button>
+              <button type="button" data-game-speed="2" aria-pressed="false">2×</button>
+              <button type="button" data-game-speed="3" aria-pressed="true">3×</button>
+              <button type="button" data-game-speed="4" aria-pressed="false">4×</button>
+              <button type="button" data-game-speed="5" aria-pressed="false">5×</button>
+            </div>
+            <span class="speed-rate" id="speedRateValue">0,5с / 6ч</span>
+          </div>
+          <button class="play-toggle" id="playToggleButton" type="button" aria-pressed="false" aria-label="Начать игру">
+            <span class="play-toggle-icon" id="playToggleIcon" aria-hidden="true">▶</span><span id="playToggleLabel">Играть</span>
+          </button>
+        </nav>
+
+        <section class="management-screen hidden" id="economyScreen" role="dialog" aria-modal="true" aria-labelledby="economyTitle">
+          <header class="management-header"><div class="management-brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>МАНДАТ</span><i>/</i><b>ЭКОНОМИКА</b></div><button class="close-button" data-close aria-label="Закрыть экран">×</button></header>
+          <div class="management-content">
+            <div class="management-title"><div><span class="overline">ГОСУДАРСТВЕННОЕ УПРАВЛЕНИЕ · 01</span><h2 id="economyTitle">Экономика</h2><p>Один такт — 6 игровых часов. Показатели обновляются каждый такт; месячные денежные потоки начисляются пропорционально прошедшему времени. Исходные числа условные.</p></div><span class="management-index">01</span></div>
+            <div class="economy-dashboard">
+              <div class="economy-facts">
+                <article class="fact-card"><span class="metric-label">ВВП</span><div><strong id="gdpValue">2,2</strong><span>трлн $</span></div><small>ОЦЕНКА В ДОЛЛАРАХ · НЕ ВЛИЯЕТ НА БЮДЖЕТ</small><i class="trend up" id="gdpTrend">→ 0,0%</i></article>
+                <article class="fact-card"><span class="metric-label">ИНФЛЯЦИЯ ИПЦ</span><div><strong id="inflationValue">7,8</strong><span>%</span></div><small>ЗА 12 МЕСЯЦЕВ</small><i class="trend down" id="inflationTrend">→ 0,0 п.п.</i><span class="fact-subline">За месяц: <b id="inflationMomValue">+0,0%</b> · базовая за 12 мес.: <b id="coreInflationValue">6,4%</b>%</span></article>
+                <article class="fact-card"><span class="metric-label">БЮДЖЕТ</span><div><strong id="budgetValue">+1,4</strong><span>% ВВП</span></div><small>ОБЩИЙ БАЛАНС · 12 МЕСЯЦЕВ</small><i class="trend up" id="budgetTrend">ПРОФИЦИТ</i></article>
+                <article class="fact-card"><span class="metric-label">ДОЛГ / ВВП</span><div><strong id="debtRatioValue">20,0</strong><span>%</span></div><small>ДОЛГ К НОМИНАЛЬНОМУ ВВП ЗА 12 МЕСЯЦЕВ</small></article>
+                <article class="fact-card"><span class="metric-label">НАЛОГОВАЯ НАГРУЗКА</span><div><strong id="taxBurdenValue">23,0</strong><span>%</span></div><small>НАЛОГОВЫЕ ДОХОДЫ / ВВП · 12 МЕСЯЦЕВ</small></article>
+                <article class="fact-card"><span class="metric-label">РАЗРЫВ ВЫПУСКА</span><div><strong id="outputGapValue">+0,0%</strong></div><small>РЕАЛЬНЫЙ ВВП К ПОТЕНЦИАЛЬНОМУ</small></article>
+              </div>
+              <div class="economy-summary-strip">
+                <span>Экономика на: <b id="economyAsOfValue">1 января 2026</b></span>
+                <span>Частота расчёта: <b id="economyNextUpdateValue">каждый такт</b></span>
+                <span>Реальный ВВП, индекс: <b id="realGdpIndexValue">100,00</b></span>
+                <span>Номинальный ВВП за месяц: <b id="nominalGdpValue">13 500 млрд ₽</b></span>
+                <span>Безработица: <b id="unemploymentSummaryValue">3,2</b>%</span>
+                <span>Реальная зарплата, индекс: <b id="realWageValue">100,00</b></span>
+                <span>Частные инвестиции, индекс: <b id="investmentIndexValue">100,00</b></span>
+              </div>
+              <section class="economy-section history-section" aria-labelledby="historyTitle">
+                <div class="subsection-heading"><div><span class="overline">ИСТОРИЯ ЭКОНОМИКИ</span><h3 id="historyTitle">Показатели во времени</h3></div><span class="section-unit" id="historyGranularityLabel">Фактические месячные срезы</span></div>
+                <div class="history-toolbar">
+                  <p id="historyDescription">Оперативные показатели обновляются каждый такт; графики хранят месячные срезы.</p>
+                  <div class="history-controls">
+                    <div class="history-granularity" role="group" aria-label="Шаг графиков"><button type="button" data-history-granularity="month" aria-pressed="true">По месяцам</button><button type="button" data-history-granularity="day" aria-pressed="false">По дням</button></div>
+                    <div class="history-range" role="group" aria-label="Период графиков" data-history-range-options="month"><button type="button" data-history-range="12" aria-pressed="false">12 мес.</button><button type="button" data-history-range="24" aria-pressed="true">24 мес.</button><button type="button" data-history-range="60" aria-pressed="false">5 лет</button><button type="button" data-history-range="all" aria-pressed="false">Вся история</button></div>
+                    <div class="history-range" role="group" aria-label="Период дневных графиков" data-history-range-options="day" hidden><button type="button" data-history-range="30" aria-pressed="false">30 дней</button><button type="button" data-history-range="90" aria-pressed="true">90 дней</button><button type="button" data-history-range="365" aria-pressed="false">365 дней</button><button type="button" data-history-range="all" aria-pressed="false">Вся история</button></div>
+                  </div>
+                </div>
+                <div class="history-grid" id="economicHistoryCharts"></div>
+              </section>
+              <section class="economy-section">
+                <div class="subsection-heading"><div><span class="overline">НАЛОГОВАЯ СИСТЕМА</span><h3>Ставки и исполнение</h3></div><span class="section-unit">Ставки указаны отдельно от поступлений</span></div>
+                <div class="tax-control-grid">
+                  <label class="range-control"><span>НДС, основная ставка <b><span id="vatMainValue">20</span>%</b></span><input data-policy-input="vatMain" type="range" min="0" max="35" step="1" aria-label="НДС, основная ставка"></label>
+                  <label class="range-control"><span>НДС, льготная ставка <b><span id="vatReducedValue">10</span>%</b></span><input data-policy-input="vatReduced" type="range" min="0" max="25" step="1" aria-label="НДС, льготная ставка"></label>
+                  <label class="range-control"><span>Доля льготных товаров <b><span id="vatReducedShareValue">22</span>%</b></span><input data-policy-input="vatReducedShare" type="range" min="0" max="50" step="1" aria-label="Доля льготных товаров"></label>
+                  <label class="range-control"><span>Доля освобождённых товаров <b><span id="vatExemptShareValue">8</span>%</b></span><input data-policy-input="vatExemptShare" type="range" min="0" max="40" step="1" aria-label="Доля освобождённых товаров"></label>
+                  <label class="range-control"><span>НДФЛ <b><span id="pitRateValue">13</span>%</b></span><input data-policy-input="pitRate" type="range" min="0" max="50" step="1" aria-label="Ставка НДФЛ"></label>
+                  <label class="range-control"><span>Взносы с фонда оплаты труда <b><span id="payrollRateValue">30</span>%</b></span><input data-policy-input="payrollRate" type="range" min="0" max="60" step="1" aria-label="Ставка взносов с фонда оплаты труда"></label>
+                  <label class="range-control"><span>Доля взносов работодателя <b><span id="employerShareValue">70</span>%</b></span><input data-policy-input="employerShare" type="range" min="0" max="100" step="1" aria-label="Доля взносов работодателя"></label>
+                  <label class="range-control"><span>Налог на прибыль <b><span id="corporateRateValue">20</span>%</b></span><input data-policy-input="corporateRate" type="range" min="0" max="45" step="1" aria-label="Ставка налога на прибыль"></label>
+                  <label class="range-control"><span>Ресурсные платежи <b><span id="resourceRateValue">12</span>%</b></span><input data-policy-input="resourceRate" type="range" min="0" max="50" step="1" aria-label="Ставка ресурсных платежей"></label>
+                  <label class="range-control"><span>Качество администрирования <b><span id="adminQualityValue">72</span>%</b></span><input data-policy-input="adminQuality" type="range" min="20" max="100" step="1" aria-label="Качество налогового администрирования"></label>
+                </div>
+                <div class="table-scroll"><table class="economy-table tax-table"><thead><tr><th>Налог</th><th>Эффективная ставка</th><th>База за месяц</th><th>Собираемость</th><th>Поступления за месяц</th></tr></thead><tbody id="taxTableBody"></tbody></table></div>
+                <p class="table-note">Льготы уменьшают базу НДС, администрирование меняет собираемость с задержкой в модели. Налог на прибыль чувствительнее к деловой активности. Налоговая нагрузка выше — вычисляемый итог по фактическим поступлениям за 12 месяцев.</p>
+              </section>
+              <section class="economy-section policy-card">
+                <div class="subsection-heading"><div><span class="overline">ДЕНЕЖНАЯ ПОЛИТИКА</span><h3>Ставка и кредитный канал</h3></div><span class="section-unit">Решение игрока · % годовых</span></div>
+                <label class="range-control rate-control"><span><span id="policyRateLabel">Ставка центрального банка</span><b><span id="policyRateValue">16</span>%</b></span><input data-policy-input="policyRate" type="range" min="0" max="30" step="0.25" aria-label="Ставка центрального банка"></label>
+                <div class="rate-readouts"><span>Ставка ЦБ <b><span id="policyRateValueReadout">16,00</span>%</b></span><span>Кредиты <b><span id="loanRateValue">20,50</span>%</b></span><span>Депозиты <b><span id="depositRateValue">14,50</span>%</b></span><span>Ожидания инфляции <b><span id="inflationExpectationValue">7,8</span>%</b></span></div>
+                <p class="table-note" id="monetaryDelayText">Основной вклад ставки в цены распределён на месяцы 3–24 после решения.</p>
+                <p class="institution-note" id="institutionNote">Упрощённый игровой режим: игрок выбирает ставку напрямую. Коэффициенты условные и различаются по странам.</p>
+              </section>
+              <section class="economy-section">
+                <div class="subsection-heading"><div><span class="overline">БЮДЖЕТНЫЕ ПРИОРИТЕТЫ</span><h3>Планируемые расходы</h3></div><span class="section-unit">% месячного ВВП</span></div>
+                <div class="spending-control-grid">
+                  <label class="range-control"><span>Здравоохранение <b><span id="spend-healthcareValue">3,2</span>%</b></span><input data-policy-input="spend-healthcare" type="range" min="0" max="18" step="0.1" aria-label="План расходов на здравоохранение"></label>
+                  <label class="range-control"><span>Образование <b><span id="spend-educationValue">3,4</span>%</b></span><input data-policy-input="spend-education" type="range" min="0" max="18" step="0.1" aria-label="План расходов на образование"></label>
+                  <label class="range-control"><span>Инфраструктура <b><span id="spend-infrastructureValue">2,6</span>%</b></span><input data-policy-input="spend-infrastructure" type="range" min="0" max="18" step="0.1" aria-label="План расходов на инфраструктуру"></label>
+                  <label class="range-control"><span>Социальные выплаты <b><span id="spend-socialValue">7,4</span>%</b></span><input data-policy-input="spend-social" type="range" min="0" max="18" step="0.1" aria-label="План социальных расходов"></label>
+                  <label class="range-control"><span>Администрация и безопасность <b><span id="spend-administrationValue">2,8</span>%</b></span><input data-policy-input="spend-administration" type="range" min="0" max="18" step="0.1" aria-label="План расходов на администрацию и безопасность"></label>
+                  <label class="range-control"><span>Оборона <b><span id="spend-defenseValue">3,2</span>%</b></span><input data-policy-input="spend-defense" type="range" min="0" max="18" step="0.1" aria-label="План расходов на оборону"></label>
+                </div>
+                <div class="table-scroll"><table class="economy-table"><thead><tr><th>Направление</th><th>План / месяц</th><th>Исполнено / месяц</th><th>Исполнение</th></tr></thead><tbody id="spendingTableBody"></tbody></table></div>
+                <p class="table-note">Трансферты исполняются быстрее; инфраструктура и образование наращивают исполнение постепенно. Инфраструктура и образование также меняют потенциальный выпуск с лагом.</p>
+              </section>
+              <section class="economy-section">
+                <div class="subsection-heading"><div><span class="overline">БЮДЖЕТ И ДОЛГ</span><h3>Фактический баланс за месяц</h3></div><span class="section-unit" id="taxBurdenLabel">Нагрузка считается за 12 месяцев</span></div>
+                <label class="range-control borrowing-control"><span>Дефицит, покрываемый новыми займами <b><span id="borrowingShareValue">100</span>%</b></span><input data-policy-input="borrowingShare" type="range" min="0" max="100" step="5" aria-label="Доля дефицита, покрываемая заимствованиями"></label>
+                <div class="budget-ledger">
+                  <span>Доходы <b id="budgetRevenueValue">—</b></span><span>Первичные расходы <b id="budgetPrimaryValue">—</b></span><span>Первичный баланс <b id="budgetPrimaryBalanceValue">—</b></span><span>Проценты <b id="budgetInterestValue">—</b></span><span>Общий баланс <b id="budgetOverallValue">—</b></span><span>Чистое заимствование <b id="netBorrowingValue">—</b></span><span>Госдолг <b id="debtValue">—</b></span><span>Деньги казначейства <b id="cashValue">—</b></span>
+                </div>
+                <p class="table-note causal-note" id="monthlyCauses">Модельные каналы и бухгалтерские итоги появятся после первого такта.</p>
+                <details class="cause-history"><summary>Журнал причин и событий · последние месяцы</summary><ol id="causalJournal"><li>Записи появятся после первого хода.</li></ol></details>
+                <p class="table-note">Дефицит финансируется чистым заимствованием; профицит сокращает долг. Новые облигации получают текущую доходность, а средняя стоимость долга меняется по мере рефинансирования выпусков.</p>
+              </section>
+              <section class="economy-section forecast-section">
+                <div class="subsection-heading"><div><span class="overline">УСЛОВНЫЙ ПРОГНОЗ</span><h3>Диапазон сценариев</h3></div><span class="section-unit">1 · 6 · 12 · 24 месяца</span></div>
+                <div class="table-scroll"><table class="economy-table forecast-table"><thead><tr><th>Горизонт</th><th>Инфляция за 12 мес. · центр [диапазон]</th><th>Долг / ВВП · центр [диапазон]</th><th>Разрыв выпуска</th></tr></thead><tbody id="forecastBody"></tbody></table></div>
+                <p class="table-note" id="forecastAssumptions"></p>
+              </section>
+              <div class="screen-actions decision-actions"><div><span class="decision-note"><span class="note-dot"></span><span id="decisionQueueNote">Подтвердите изменение, чтобы поставить его в очередь.</span></span></div><div class="decision-buttons"><button class="secondary-button" id="applyDecisionButton" type="button">Подтвердить решение</button><button class="primary-button month-button" id="managementPlayButton" type="button" aria-pressed="false"><span id="managementPlayLabel">Начать игру</span><span id="managementPlayIcon">▶</span></button></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="management-screen hidden" id="societyScreen" role="dialog" aria-modal="true" aria-labelledby="societyTitle">
+          <header class="management-header"><div class="management-brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>МАНДАТ</span><i>/</i><b>ОБЩЕСТВО</b></div><button class="close-button" data-close aria-label="Закрыть экран">×</button></header>
+          <div class="management-content compact-content">
+            <div class="management-title"><div><span class="overline">ГОСУДАРСТВЕННОЕ УПРАВЛЕНИЕ · 02</span><h2 id="societyTitle">Общество</h2><p>Настроение граждан и занятость показывают, как люди ощущают перемены.</p></div><span class="management-index">02</span></div>
+            <div class="society-grid">
+              <article class="large-stat"><span class="metric-label">ДОВЕРИЕ К ЛИДЕРУ</span><div><strong id="trustValue">61</strong><span>%</span></div><small>ИНДЕКС ОБЩЕСТВЕННОЙ ПОДДЕРЖКИ</small><div class="stat-meter"><i id="trustBar"></i></div><i class="trend up" id="trustTrend">↗ 2</i></article>
+              <article class="large-stat"><span class="metric-label">БЕЗРАБОТИЦА</span><div><strong id="unemploymentValue">3,2</strong><span>%</span></div><small>РЫНОК ТРУДА</small><i class="trend down" id="unemploymentTrend">↘ 0,1</i></article>
+              <article class="public-support"><div class="support-seal">◎</div><span><small>ПОДДЕРЖКА ГРАЖДАН</small><b id="peopleTrust">64<span>%</span></b></span><div class="group-bar"><i id="peopleBar"></i></div><p>Общественное мнение меняется вместе с доходами, занятостью и ценами.</p></article>
+            </div>
+            <div class="paper-footnote"><span>ОБЩЕСТВЕННЫЕ ПОКАЗАТЕЛИ</span><span>ОБНОВЛЯЮТСЯ ПО ИТОГАМ МЕСЯЦА</span></div>
+          </div>
+        </section>
+
+        <section class="management-screen hidden" id="cabinetScreen" role="dialog" aria-modal="true" aria-labelledby="cabinetTitle">
+          <header class="management-header"><div class="management-brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>МАНДАТ</span><i>/</i><b>КАБИНЕТ</b></div><button class="close-button" data-close aria-label="Закрыть экран">×</button></header>
+          <div class="management-content compact-content">
+            <div class="management-title"><div><span class="overline">ГОСУДАРСТВЕННОЕ УПРАВЛЕНИЕ · 03</span><h2 id="cabinetTitle">Кабинет и опора власти</h2><p>Поддержка влиятельных групп определяет, насколько свободно вы можете действовать.</p></div><span class="management-index">03</span></div>
+            <div class="coalition-card"><div class="coalition-heading"><div><span class="overline">КОАЛИЦИЯ ВЛИЯНИЯ</span><h3>Кто с вами?</h3></div><div class="trust-summary"><span class="live-dot"></span><span id="coalitionSummary">КОАЛИЦИЯ СТАБИЛЬНА</span></div></div>
+              <div class="coalition-list">
+                <div class="trust-group"><span class="group-icon elite-icon">◇</span><span class="group-name">ЭЛИТЫ</span><strong id="eliteTrust">52<span>%</span></strong><div class="group-bar"><i id="eliteBar"></i></div></div>
+                <div class="trust-group"><span class="group-icon gov-icon">▤</span><span class="group-name">ПРАВИТЕЛЬСТВО</span><strong id="governmentTrust">66<span>%</span></strong><div class="group-bar"><i id="governmentBar"></i></div></div>
+                <div class="trust-group"><span class="group-icon security-icon">⬡</span><span class="group-name">СИЛОВЫЕ СТРУКТУРЫ</span><strong id="securityTrust">62<span>%</span></strong><div class="group-bar"><i id="securityBar"></i></div></div>
+              </div>
+            </div>
+            <div class="cabinet-note"><span>✳</span><p>Каждый месяц отношения с группами меняются вслед за решениями и состоянием бюджета.</p></div>
+            <div class="paper-footnote"><span>ПОЛИТИЧЕСКАЯ УСТОЙЧИВОСТЬ</span><span>ОБНОВЛЯЕТСЯ ПО ИТОГАМ МЕСЯЦА</span></div>
+          </div>
+        </section>
+      </section>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <script src="economy.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
